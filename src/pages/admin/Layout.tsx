@@ -5,6 +5,7 @@ const links = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/produtos', label: 'Produtos' },
   { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/admin/financeiro', label: 'Financeiro' },
   { to: '/admin/config', label: 'Configurações' },
 ]
 

@@ -1,4 +1,4 @@
-import type { LojaConfig, Pedido, Produto } from '../types'
+import type { Lancamento, LojaConfig, Pedido, Produto } from '../types'
 import { normalizeProdutoMidias } from './produtoMidia'
 
 const KEYS = {
@@ -7,6 +7,7 @@ const KEYS = {
   config: 'emilli.config',
   carrinho: 'emilli.carrinho',
   admin: 'emilli.admin',
+  financeiro: 'emilli.financeiro',
 } as const
 
 function read<T>(key: string, fallback: T): T {
@@ -37,6 +38,8 @@ export const storage = {
   setConfig: (v: LojaConfig) => write(KEYS.config, v),
   getCarrinho: () => read(KEYS.carrinho, [] as unknown[]),
   setCarrinho: (v: unknown) => write(KEYS.carrinho, v),
+  getLancamentos: () => read<Lancamento[]>(KEYS.financeiro, []),
+  setLancamentos: (v: Lancamento[]) => write(KEYS.financeiro, v),
   isAdmin: () => localStorage.getItem(KEYS.admin) === '1',
   setAdmin: (on: boolean) => {
     if (on) localStorage.setItem(KEYS.admin, '1')

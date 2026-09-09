@@ -48,6 +48,12 @@ export function AdminDashboard() {
         >
           Ver pedidos
         </Link>
+        <Link
+          to="/admin/financeiro"
+          className="rounded-full bg-white px-4 py-2 text-sm ring-1 ring-brand-soft"
+        >
+          Financeiro
+        </Link>
       </div>
     </div>
   )

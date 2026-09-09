@@ -3,11 +3,14 @@ import type {
   BannerSlide,
   CartItem,
   FreteConfig,
+  FormaPagamento,
+  Lancamento,
   LojaConfig,
   Pedido,
   PedidoStatus,
   Produto,
   ProdutoMidia,
+  TipoLancamento,
   Variacao,
 } from '../types'
 import { normalizeProdutoMidias } from './produtoMidia'
@@ -395,5 +398,83 @@ export const db = {
     if (!supabase) return false
     const { data } = await supabase.auth.getSession()
     return !!data.session
+  },
+
+  async fetchLancamentos(): Promise<Lancamento[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('financeiro_lancamentos')
+      .select('*')
+      .order('criado_em', { ascending: false })
+    if (error) throw error
+    return ((data ?? []) as Array<{
+      id: string
+      criado_em: string
+      tipo: TipoLancamento
+      forma: FormaPagamento
+      valor: number | string
+      descricao: string
+      pedido_id: string | null
+      pedido_codigo: string | null
+    }>).map((row) => ({
+      id: row.id,
+      criadoEm: row.criado_em,
+      tipo: row.tipo,
+      forma: row.forma,
+      valor: Number(row.valor),
+      descricao: row.descricao ?? '',
+      pedidoId: row.pedido_id ?? undefined,
+      pedidoCodigo: row.pedido_codigo ?? undefined,
+    }))
+  },
+
+  async createLancamento(
+    data: Omit<Lancamento, 'id' | 'criadoEm'>,
+  ): Promise<Lancamento> {
+    if (!supabase) throw new Error('Supabase não configurado')
+    const id = crypto.randomUUID?.() ?? uid('fin')
+    const { data: row, error } = await supabase
+      .from('financeiro_lancamentos')
+      .insert({
+        id,
+        tipo: data.tipo,
+        forma: data.forma,
+        valor: data.valor,
+        descricao: data.descricao,
+        pedido_id: data.pedidoId ?? null,
+        pedido_codigo: data.pedidoCodigo ?? null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    const r = row as {
+      id: string
+      criado_em: string
+      tipo: TipoLancamento
+      forma: FormaPagamento
+      valor: number | string
+      descricao: string
+      pedido_id: string | null
+      pedido_codigo: string | null
+    }
+    return {
+      id: r.id,
+      criadoEm: r.criado_em,
+      tipo: r.tipo,
+      forma: r.forma,
+      valor: Number(r.valor),
+      descricao: r.descricao ?? '',
+      pedidoId: r.pedido_id ?? undefined,
+      pedidoCodigo: r.pedido_codigo ?? undefined,
+    }
+  },
+
+  async deleteLancamento(id: string): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('financeiro_lancamentos')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
   },
 }

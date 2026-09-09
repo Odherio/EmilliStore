@@ -84,6 +84,20 @@ export type FreteConfig = {
   freteGratisAcima: number
 }
 
+export type FormaPagamento = 'dinheiro' | 'cartao' | 'pix'
+export type TipoLancamento = 'entrada' | 'saida'
+
+export type Lancamento = {
+  id: string
+  criadoEm: string
+  tipo: TipoLancamento
+  forma: FormaPagamento
+  valor: number
+  descricao: string
+  pedidoId?: string
+  pedidoCodigo?: string
+}
+
 export type BannerSlide = {
   id: string
   tipo: 'imagem' | 'video'
