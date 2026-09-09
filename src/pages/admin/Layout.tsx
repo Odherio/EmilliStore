@@ -1,4 +1,15 @@
-import { Bell } from 'lucide-react'
+import {
+  Bell,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Settings,
+  ShoppingBag,
+  Store,
+  Wallet,
+  X,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useStore } from '../../context/StoreContext'
@@ -21,17 +32,26 @@ function writeSeen(ids: Set<string>) {
 }
 
 const links = [
-  { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/produtos', label: 'Produtos' },
-  { to: '/admin/pedidos', label: 'Pedidos', badge: true },
-  { to: '/admin/financeiro', label: 'Financeiro' },
-  { to: '/admin/config', label: 'Configurações' },
+  { to: '/admin', label: 'Dashboard', end: true, icon: LayoutDashboard },
+  { to: '/admin/produtos', label: 'Produtos', icon: Package },
+  { to: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag, badge: true },
+  { to: '/admin/financeiro', label: 'Financeiro', icon: Wallet },
+  { to: '/admin/config', label: 'Configurações', icon: Settings },
 ]
 
+function pageTitle(pathname: string) {
+  if (pathname.startsWith('/admin/produtos')) return 'Produtos'
+  if (pathname.startsWith('/admin/pedidos')) return 'Pedidos'
+  if (pathname.startsWith('/admin/financeiro')) return 'Financeiro'
+  if (pathname.startsWith('/admin/config')) return 'Configurações'
+  return 'Dashboard'
+}
+
 export function AdminLayout() {
-  const { isAdmin, logout, pedidos } = useStore()
+  const { isAdmin, logout, pedidos, config } = useStore()
   const location = useLocation()
   const [seen, setSeen] = useState<Set<string>>(() => readSeen())
+  const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState<{
     id: string
     codigo: string
@@ -41,12 +61,16 @@ export function AdminLayout() {
   const knownRef = useRef<Set<string> | null>(null)
 
   const pendentesNovos = useMemo(
-    () =>
-      pedidos.filter((p) => p.status === 'pendente' && !seen.has(p.id)),
+    () => pedidos.filter((p) => p.status === 'pendente' && !seen.has(p.id)),
     [pedidos, seen],
   )
 
   const badgeCount = pendentesNovos.length
+  const title = pageTitle(location.pathname)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   useEffect(() => {
     if (!location.pathname.startsWith('/admin/pedidos')) return
@@ -66,7 +90,10 @@ export function AdminLayout() {
 
   useEffect(() => {
     if (!isAdmin) return
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    if (
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'default'
+    ) {
       void Notification.requestPermission()
     }
   }, [isAdmin])
@@ -116,8 +143,95 @@ export function AdminLayout() {
 
   if (!isAdmin) return <Navigate to="/admin/login" replace />
 
+  const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
+      {links.map((l) => {
+        const active = l.end
+          ? location.pathname === l.to
+          : location.pathname.startsWith(l.to)
+        const showBadge = l.badge && badgeCount > 0
+        const Icon = l.icon
+        return (
+          <Link
+            key={l.to}
+            to={l.to}
+            onClick={onNavigate}
+            className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
+              active
+                ? 'bg-brand text-white shadow-sm shadow-brand/25'
+                : 'text-ink/80 hover:bg-brand-soft/70 hover:text-ink'
+            }`}
+          >
+            <Icon
+              size={18}
+              className={active ? 'text-white' : 'text-brand-deep'}
+            />
+            <span className="flex-1">{l.label}</span>
+            {showBadge ? (
+              <span
+                className={`grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[10px] font-bold ${
+                  active ? 'bg-white text-brand-deep' : 'bg-brand text-white'
+                }`}
+              >
+                {badgeCount}
+              </span>
+            ) : null}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+
+  const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <>
+      <div className="flex items-center gap-3 border-b border-brand-soft px-5 py-5">
+        <img
+          src="/logo.jpg"
+          alt=""
+          className="h-11 w-11 rounded-2xl object-cover ring-2 ring-brand-soft"
+        />
+        <div className="min-w-0">
+          <p className="font-display text-xl leading-none text-ink">
+            {config.nome || 'EmilliStore'}
+          </p>
+          <p className="mt-1 text-xs text-muted">Painel admin</p>
+        </div>
+      </div>
+
+      <NavLinks onNavigate={onNavigate} />
+
+      <div className="mt-auto space-y-1 border-t border-brand-soft p-3">
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-muted transition hover:bg-brand-soft/70 hover:text-ink"
+        >
+          <Store size={18} className="text-brand-deep" />
+          Ver loja
+        </Link>
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-muted transition hover:bg-rose-50 hover:text-rose-700"
+        >
+          <LogOut size={18} />
+          Sair
+        </button>
+        <a
+          href="https://wa.me/5562991389317"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block px-3 pb-2 pt-1 text-[11px] text-muted"
+        >
+          Desenvolvido por{' '}
+          <span className="font-medium text-brand-deep underline">Odherio</span>
+        </a>
+      </div>
+    </>
+  )
+
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-[#faf4f3]">
       {toast ? (
         <div className="fixed inset-x-0 top-3 z-50 flex justify-center px-4">
           <Link
@@ -139,77 +253,82 @@ export function AdminLayout() {
         </div>
       ) : null}
 
-      <header className="border-b border-brand-soft bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
-          <img src="/logo.jpg" alt="" className="h-10 w-10 rounded-full object-cover" />
-          <div className="mr-auto">
-            <p className="font-display text-xl leading-none">EmilliStore</p>
-            <p className="text-xs text-muted">Painel admin</p>
-          </div>
-          {badgeCount > 0 ? (
-            <Link
-              to="/admin/pedidos"
-              className="relative grid h-9 w-9 place-items-center rounded-full bg-brand text-white"
-              aria-label={`${badgeCount} pedidos novos`}
-            >
-              <Bell size={16} />
-              <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-ink px-1 text-[10px] font-bold">
-                {badgeCount}
-              </span>
-            </Link>
-          ) : null}
-          <Link to="/" className="text-sm text-muted underline">
-            Ver loja
-          </Link>
-          <a
-            href="https://wa.me/5562991389317"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden text-xs text-muted sm:inline"
-          >
-            por{' '}
-            <span className="font-medium text-brand-deep underline">Odherio</span>
-          </a>
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-brand-soft/80 bg-white/95 backdrop-blur lg:flex">
+        <SidebarBody />
+      </aside>
+
+      {/* Mobile drawer */}
+      {menuOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
-            onClick={() => void logout()}
-            className="rounded-full bg-brand-soft px-3 py-1.5 text-sm"
-          >
-            Sair
-          </button>
-        </div>
-        <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-3">
-          {links.map((l) => {
-            const active = l.end
-              ? location.pathname === l.to
-              : location.pathname.startsWith(l.to)
-            const showBadge = l.badge && badgeCount > 0
-            return (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={`relative shrink-0 rounded-full px-3 py-1.5 text-sm ${
-                  active ? 'bg-brand text-white' : 'bg-cream text-ink'
-                }`}
+            aria-label="Fechar menu"
+            className="absolute inset-0 bg-ink/40"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] flex-col bg-white shadow-xl animate-fade-up">
+            <div className="flex justify-end px-3 pt-3">
+              <button
+                type="button"
+                aria-label="Fechar"
+                onClick={() => setMenuOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-full bg-cream text-ink"
               >
-                {l.label}
-                {showBadge ? (
-                  <span
-                    className={`ml-1 inline-grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold ${
-                      active ? 'bg-white text-brand-deep' : 'bg-brand text-white'
-                    }`}
-                  >
-                    {badgeCount}
-                  </span>
-                ) : null}
+                <X size={18} />
+              </button>
+            </div>
+            <SidebarBody onNavigate={() => setMenuOpen(false)} />
+          </aside>
+        </div>
+      ) : null}
+
+      <div className="lg:pl-64">
+        <header className="sticky top-0 z-20 border-b border-brand-soft/70 bg-[#faf4f3]/90 backdrop-blur">
+          <div className="flex items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+            <button
+              type="button"
+              aria-label="Abrir menu"
+              onClick={() => setMenuOpen(true)}
+              className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-brand-soft lg:hidden"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+                Admin
+              </p>
+              <h1 className="font-display truncate text-2xl leading-tight text-ink sm:text-3xl">
+                {title}
+              </h1>
+            </div>
+            {badgeCount > 0 ? (
+              <Link
+                to="/admin/pedidos"
+                className="relative grid h-10 w-10 place-items-center rounded-2xl bg-brand text-white shadow-sm shadow-brand/30"
+                aria-label={`${badgeCount} pedidos novos`}
+              >
+                <Bell size={16} />
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-ink px-1 text-[10px] font-bold">
+                  {badgeCount}
+                </span>
               </Link>
-            )
-          })}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        <Outlet />
-      </main>
+            ) : (
+              <Link
+                to="/admin/pedidos"
+                className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-muted shadow-sm ring-1 ring-brand-soft"
+                aria-label="Pedidos"
+              >
+                <Bell size={16} />
+              </Link>
+            )}
+          </div>
+        </header>
+
+        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

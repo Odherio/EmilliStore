@@ -28,15 +28,15 @@ export function AdminLoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-cream px-4">
+    <div className="grid min-h-screen place-items-center bg-[#faf4f3] px-4">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-sm ring-1 ring-brand-soft"
+        className="w-full max-w-sm rounded-[1.75rem] bg-white p-7 shadow-sm ring-1 ring-brand-soft"
       >
         <img
           src="/logo.jpg"
           alt="EmilliStore"
-          className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
+          className="mx-auto mb-4 h-20 w-20 rounded-2xl object-cover ring-2 ring-brand-soft"
         />
         <h1 className="font-display text-center text-3xl text-ink">Admin</h1>
         <p className="mb-6 text-center text-sm text-muted">

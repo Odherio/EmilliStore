@@ -14,6 +14,7 @@ type Props = {
     variacao_id: string
     nome: string
     variacao: string
+    cor?: string
     imagem: string
     preco: number
     quantidade: number
@@ -22,6 +23,7 @@ type Props = {
 
 export function ProductModal({ produto, open, onClose, onAdd }: Props) {
   const [variacaoId, setVariacaoId] = useState<string | null>(null)
+  const [cor, setCor] = useState<string | null>(null)
   const [qty, setQty] = useState(1)
   const [midiaIndex, setMidiaIndex] = useState(0)
 
@@ -30,6 +32,9 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
     return normalizeProdutoMidias(produto).midias
   }, [produto])
 
+  const cores = produto?.cores?.filter((c) => c.trim()) ?? []
+  const precisaCor = cores.length > 0
+
   const selected = useMemo(
     () => produto?.variacoes.find((v) => v.id === variacaoId) ?? null,
     [produto, variacaoId],
@@ -37,10 +42,12 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
 
   const max = selected?.estoque ?? 1
   const current = midias[midiaIndex] ?? midias[0]
+  const podeAdd = !!selected && (!precisaCor || !!cor)
 
   useEffect(() => {
     setMidiaIndex(0)
     setVariacaoId(null)
+    setCor(null)
     setQty(1)
   }, [produto?.id])
 
@@ -48,6 +55,7 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
 
   const resetAndClose = () => {
     setVariacaoId(null)
+    setCor(null)
     setQty(1)
     setMidiaIndex(0)
     onClose()
@@ -106,15 +114,21 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
             </div>
             <button
               type="button"
-              disabled={!selected}
+              disabled={!podeAdd}
               onClick={() => {
                 if (!selected) return
+                if (precisaCor && !cor) return
+                const fotoEscolhida =
+                  current?.tipo === 'imagem' && current.url
+                    ? current.url
+                    : produto.imagem
                 onAdd({
                   produto_id: produto.id,
                   variacao_id: selected.id,
                   nome: produto.nome,
                   variacao: selected.nome,
-                  imagem: produto.imagem,
+                  cor: cor || undefined,
+                  imagem: fotoEscolhida,
                   preco: produto.preco,
                   quantidade: qty,
                 })
@@ -122,9 +136,11 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
               }}
               className="flex-1 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {selected
+              {podeAdd
                 ? `Adicionar · ${formatBRL(produto.preco * qty)}`
-                : 'Escolha o tamanho'}
+                : !selected
+                  ? 'Escolha o tamanho'
+                  : 'Escolha a cor'}
             </button>
           </div>
         </div>
@@ -239,6 +255,31 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
             })}
           </div>
         </div>
+
+        {precisaCor ? (
+          <div>
+            <p className="mb-2 text-sm font-medium text-ink">Escolha a cor</p>
+            <div className="flex flex-wrap gap-2">
+              {cores.map((c) => {
+                const active = cor === c
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCor(c)}
+                    className={`rounded-full px-3 py-2 text-sm transition ${
+                      active
+                        ? 'bg-ink text-white'
+                        : 'bg-brand-soft text-ink hover:bg-brand/20'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </Sheet>
   )

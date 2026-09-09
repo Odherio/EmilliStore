@@ -32,8 +32,17 @@ type StoreContextValue = {
   deleteProduto: (id: string) => Promise<void>
   carrinho: CartItem[]
   addToCart: (item: CartItem) => void
-  updateQty: (produtoId: string, variacaoId: string, qty: number) => void
-  removeFromCart: (produtoId: string, variacaoId: string) => void
+  updateQty: (
+    produtoId: string,
+    variacaoId: string,
+    qty: number,
+    cor?: string,
+  ) => void
+  removeFromCart: (
+    produtoId: string,
+    variacaoId: string,
+    cor?: string,
+  ) => void
   clearCart: () => void
   cartCount: number
   cartTotal: number
@@ -210,7 +219,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const idx = prev.findIndex(
         (x) =>
           x.produto_id === item.produto_id &&
-          x.variacao_id === item.variacao_id,
+          x.variacao_id === item.variacao_id &&
+          (x.cor || '') === (item.cor || ''),
       )
       const next =
         idx >= 0
@@ -226,18 +236,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateQty = useCallback(
-    (produtoId: string, variacaoId: string, qty: number) => {
+    (produtoId: string, variacaoId: string, qty: number, cor?: string) => {
       setCarrinho((prev) => {
         const next =
           qty <= 0
             ? prev.filter(
                 (x) =>
                   !(
-                    x.produto_id === produtoId && x.variacao_id === variacaoId
+                    x.produto_id === produtoId &&
+                    x.variacao_id === variacaoId &&
+                    (x.cor || '') === (cor || '')
                   ),
               )
             : prev.map((x) =>
-                x.produto_id === produtoId && x.variacao_id === variacaoId
+                x.produto_id === produtoId &&
+                x.variacao_id === variacaoId &&
+                (x.cor || '') === (cor || '')
                   ? { ...x, quantidade: qty }
                   : x,
               )
@@ -249,11 +263,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
 
   const removeFromCart = useCallback(
-    (produtoId: string, variacaoId: string) => {
+    (produtoId: string, variacaoId: string, cor?: string) => {
       setCarrinho((prev) => {
         const next = prev.filter(
           (x) =>
-            !(x.produto_id === produtoId && x.variacao_id === variacaoId),
+            !(
+              x.produto_id === produtoId &&
+              x.variacao_id === variacaoId &&
+              (x.cor || '') === (cor || '')
+            ),
         )
         storage.setCarrinho(next)
         return next

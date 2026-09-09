@@ -108,7 +108,7 @@ function labelMarkup(pedido: Pedido, config: LojaConfig): string {
       (i) =>
         `<tr>
           <td>${i.quantidade}x</td>
-          <td>${escapeHtml(i.nome || '')} <span class="var">(${escapeHtml(i.variacao || '')})</span></td>
+          <td>${escapeHtml(i.nome || '')} <span class="var">(${escapeHtml(i.variacao || '')}${i.cor ? ` · ${escapeHtml(i.cor)}` : ''})</span></td>
           <td class="right">${formatBRL(Number(i.preco) * Number(i.quantidade))}</td>
         </tr>`,
     )

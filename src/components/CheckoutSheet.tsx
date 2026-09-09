@@ -273,7 +273,7 @@ export function CheckoutSheet({ open, onClose }: Props) {
             <ul className="space-y-3">
               {carrinho.map((item) => (
                 <li
-                  key={`${item.produto_id}-${item.variacao_id}`}
+                  key={`${item.produto_id}-${item.variacao_id}-${item.cor || ''}`}
                   className="flex gap-3 rounded-2xl bg-cream p-3"
                 >
                   <img
@@ -283,7 +283,10 @@ export function CheckoutSheet({ open, onClose }: Props) {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-ink">{item.nome}</p>
-                    <p className="text-sm text-muted">{item.variacao}</p>
+                    <p className="text-sm text-muted">
+                      {item.variacao}
+                      {item.cor ? ` · ${item.cor}` : ''}
+                    </p>
                     <p className="text-xs text-muted">
                       {formatBRL(item.preco)} cada
                     </p>
@@ -296,6 +299,7 @@ export function CheckoutSheet({ open, onClose }: Props) {
                             item.produto_id,
                             item.variacao_id,
                             item.quantidade - 1,
+                            item.cor,
                           )
                         }
                         className="rounded-full bg-white p-1 ring-1 ring-brand-soft"
@@ -313,6 +317,7 @@ export function CheckoutSheet({ open, onClose }: Props) {
                             item.produto_id,
                             item.variacao_id,
                             item.quantidade + 1,
+                            item.cor,
                           )
                         }
                         className="rounded-full bg-white p-1 ring-1 ring-brand-soft"
@@ -323,7 +328,11 @@ export function CheckoutSheet({ open, onClose }: Props) {
                         type="button"
                         aria-label="Remover item"
                         onClick={() =>
-                          removeFromCart(item.produto_id, item.variacao_id)
+                          removeFromCart(
+                            item.produto_id,
+                            item.variacao_id,
+                            item.cor,
+                          )
                         }
                         className="ml-auto text-muted hover:text-rose-600"
                       >

@@ -54,12 +54,13 @@ export function AdminPedidos() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl">Pedidos</h1>
           {pendentes.length > 0 ? (
             <p className="text-sm text-brand-deep">
               {pendentes.length} pendente{pendentes.length > 1 ? 's' : ''}
             </p>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted">Todos os pedidos da loja</p>
+          )}
         </div>
         {pendentes.length > 0 && (
           <button
@@ -78,7 +79,7 @@ export function AdminPedidos() {
           {pedidos.map((p) => (
             <li
               key={p.id}
-              className={`rounded-2xl bg-white p-4 ring-1 ${
+              className={`rounded-3xl bg-white p-4 ring-1 ${
                 p.status === 'pendente'
                   ? 'ring-brand shadow-sm shadow-brand/10'
                   : 'ring-brand-soft'
@@ -106,8 +107,9 @@ export function AdminPedidos() {
               </div>
               <ul className="mt-3 space-y-1 text-sm text-muted">
                 {p.itens.map((i) => (
-                  <li key={`${i.produto_id}-${i.variacao_id}`}>
-                    {i.quantidade}x {i.nome} ({i.variacao})
+                  <li key={`${i.produto_id}-${i.variacao_id}-${i.cor || ''}`}>
+                    {i.quantidade}x {i.nome} ({i.variacao}
+                    {i.cor ? ` · ${i.cor}` : ''})
                   </li>
                 ))}
               </ul>

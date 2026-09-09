@@ -90,6 +90,7 @@ export function seedProdutos(): Produto[] {
       preco,
       imagem: fotos[0],
       midias,
+      cores: ['Rosa', 'Preto', 'Bege'],
       ativo: true,
       destaque: false,
       promocao: false,

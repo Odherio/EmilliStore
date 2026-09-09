@@ -26,6 +26,7 @@ type ProdutoRow = {
   preco: number | string
   imagem: string
   midias?: ProdutoMidia[] | null
+  cores?: string[] | null
   ativo: boolean
   destaque: boolean
   promocao: boolean
@@ -90,6 +91,9 @@ function mapProduto(row: ProdutoRow): Produto {
     preco: Number(row.preco),
     imagem,
     midias,
+    cores: Array.isArray(row.cores)
+      ? row.cores.map(String).filter((c) => c.trim())
+      : [],
     ativo: !!row.ativo,
     destaque: !!row.destaque,
     promocao: !!row.promocao,
@@ -150,6 +154,7 @@ function mapPedido(row: PedidoRow): Pedido {
         variacao_id: i.variacao_id ?? '',
         nome: i.nome,
         variacao: i.variacao,
+        cor: (i as { cor?: string | null }).cor ?? undefined,
         imagem: i.imagem,
         preco: Number(i.preco),
         quantidade: i.quantidade,
@@ -221,6 +226,7 @@ export const db = {
       preco: produto.preco,
       imagem,
       midias,
+      cores: (produto.cores ?? []).map((c) => c.trim()).filter(Boolean),
       ativo: produto.ativo,
       destaque: produto.destaque,
       promocao: produto.promocao,
@@ -300,7 +306,7 @@ export const db = {
         produto_id: i.produto_id,
         variacao_id: i.variacao_id,
         nome: i.nome,
-        variacao: i.variacao,
+        variacao: i.cor ? `${i.variacao} · ${i.cor}` : i.variacao,
         imagem: i.imagem,
         preco: i.preco,
         quantidade: i.quantidade,
@@ -331,7 +337,7 @@ export const db = {
         produto_id: i.produto_id,
         variacao_id: i.variacao_id,
         nome: i.nome,
-        variacao: i.variacao,
+        variacao: i.cor ? `${i.variacao} · ${i.cor}` : i.variacao,
         imagem: i.imagem,
         preco: i.preco,
         quantidade: i.quantidade,

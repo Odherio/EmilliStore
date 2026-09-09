@@ -165,16 +165,13 @@ export function AdminFinanceiro() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl">Financeiro</h1>
-          <p className="text-sm text-muted">
-            Entradas e saídas · Dinheiro, cartão e PIX
-          </p>
-        </div>
+        <p className="text-sm text-muted">
+          Entradas e saídas · Dinheiro, cartão e PIX
+        </p>
         <button
           type="button"
           onClick={() => void load()}
-          className="rounded-full bg-brand-soft px-4 py-2 text-sm"
+          className="rounded-2xl bg-white px-4 py-2 text-sm ring-1 ring-brand-soft"
         >
           Atualizar
         </button>

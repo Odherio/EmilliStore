@@ -20,6 +20,8 @@ export type Produto = {
   /** Capa (primeira imagem) — usada em card/carrinho */
   imagem: string
   midias: ProdutoMidia[]
+  /** Cores disponíveis (ex.: Rosa, Preto) */
+  cores: string[]
   ativo: boolean
   destaque: boolean
   promocao: boolean
@@ -32,6 +34,7 @@ export type CartItem = {
   variacao_id: string
   nome: string
   variacao: string
+  cor?: string
   imagem: string
   preco: number
   quantidade: number

@@ -26,7 +26,14 @@ function write<T>(key: string, value: T) {
 
 function normalizeProduto(p: Produto): Produto {
   const { imagem, midias } = normalizeProdutoMidias(p)
-  return { ...p, imagem, midias }
+  return {
+    ...p,
+    imagem,
+    midias,
+    cores: Array.isArray(p.cores)
+      ? p.cores.map(String).filter((c) => c.trim())
+      : [],
+  }
 }
 
 export const storage = {

@@ -1,6 +1,14 @@
 import type { LojaConfig, Pedido } from '../types'
 import { formatBRL } from './format'
-import { lojaMapsUrl } from './maps'
+import { enderecoMapsUrl, lojaMapsUrl } from './maps'
+
+/** Só URLs públicas — WhatsApp não abre data:/blob: */
+function fotoUrlParaWhatsapp(url: string | undefined) {
+  if (!url) return null
+  const trimmed = url.trim()
+  if (!/^https?:\/\//i.test(trimmed)) return null
+  return trimmed
+}
 
 export function buildWhatsappMessage(
   pedido: Pedido,
@@ -17,8 +25,10 @@ export function buildWhatsappMessage(
   linhas.push('*Itens:*')
   for (const item of pedido.itens) {
     linhas.push(
-      `• ${item.quantidade}x ${item.nome} (${item.variacao}) — ${formatBRL(item.preco * item.quantidade)}`,
+      `• ${item.quantidade}x ${item.nome} (${item.variacao}${item.cor ? ` · ${item.cor}` : ''}) — ${formatBRL(item.preco * item.quantidade)}`,
     )
+    const foto = fotoUrlParaWhatsapp(item.imagem)
+    if (foto) linhas.push(`  Foto: ${foto}`)
   }
   linhas.push('')
   linhas.push(
@@ -34,6 +44,7 @@ export function buildWhatsappMessage(
       `Endereço: ${e.rua}, ${e.numero}${e.complemento ? ` — ${e.complemento}` : ''} — ${e.bairro} — ${e.cidade}/${e.uf} CEP ${e.cep}`,
     )
     if (e.referencia) linhas.push(`Ref.: ${e.referencia}`)
+    linhas.push(`Localização: ${enderecoMapsUrl(e)}`)
     if (pedido.distanciaKm != null) {
       linhas.push(`Distância: ${pedido.distanciaKm} km`)
     }

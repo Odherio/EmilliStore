@@ -13,6 +13,7 @@ const emptyForm = (): Omit<Produto, 'id'> & { id?: string } => ({
   preco: 0,
   imagem: '',
   midias: [],
+  cores: [],
   ativo: true,
   destaque: false,
   promocao: false,
@@ -90,6 +91,7 @@ export function AdminProdutos() {
         preco: Number(form.preco),
         imagem,
         midias: normalized,
+        cores: (form.cores ?? []).map((c) => c.trim()).filter(Boolean),
         ativo: form.ativo,
         destaque: form.destaque,
         promocao: form.promocao,
@@ -108,7 +110,7 @@ export function AdminProdutos() {
   const startEdit = (p: Produto) => {
     const { imagem, midias: m } = normalizeProdutoMidias(p)
     setEditingId(p.id)
-    setForm({ ...p, imagem, midias: m })
+    setForm({ ...p, imagem, midias: m, cores: p.cores ?? [] })
     setOpen(true)
   }
 
@@ -124,7 +126,9 @@ export function AdminProdutos() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-3xl">Produtos</h1>
+        <p className="text-sm text-muted">
+          {lista.length} produto{lista.length === 1 ? '' : 's'} no catálogo
+        </p>
         <button
           type="button"
           onClick={() => {
@@ -132,7 +136,7 @@ export function AdminProdutos() {
             setForm(emptyForm())
             setOpen(true)
           }}
-          className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-2xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand/30"
         >
           Novo produto
         </button>
@@ -142,7 +146,7 @@ export function AdminProdutos() {
         {lista.map((p) => (
           <div
             key={p.id}
-            className="flex gap-3 rounded-2xl bg-white p-3 ring-1 ring-brand-soft"
+            className="flex gap-3 rounded-3xl bg-white p-3 shadow-sm ring-1 ring-brand-soft"
           >
             <img
               src={p.imagem}
@@ -345,6 +349,127 @@ export function AdminProdutos() {
                     {label}
                   </label>
                 ))}
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium">Cores</p>
+                <p className="mb-2 text-xs text-muted">
+                  Toque para adicionar. Opcional — se vazio, a loja não pede cor.
+                </p>
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  {[
+                    'Preto',
+                    'Branco',
+                    'Rosa',
+                    'Bege',
+                    'Marrom',
+                    'Azul',
+                    'Verde',
+                    'Vermelho',
+                    'Amarelo',
+                    'Cinza',
+                    'Off-white',
+                    'Estampado',
+                  ].map((nome) => {
+                    const existe = (form.cores ?? []).some(
+                      (c) => c.toLowerCase() === nome.toLowerCase(),
+                    )
+                    return (
+                      <button
+                        key={nome}
+                        type="button"
+                        disabled={existe}
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            cores: [...(f.cores ?? []), nome],
+                          }))
+                        }
+                        className={`rounded-full px-2.5 py-1 text-xs ${
+                          existe
+                            ? 'bg-brand/20 text-brand-deep'
+                            : 'bg-white text-ink ring-1 ring-brand-soft hover:bg-brand-soft'
+                        }`}
+                      >
+                        {existe ? `✓ ${nome}` : `+ ${nome}`}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mb-2 flex gap-2">
+                  <input
+                    placeholder="Outra cor…"
+                    id="cor-custom"
+                    className="flex-1 rounded-xl border border-brand-soft bg-cream px-3 py-2 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter') return
+                      e.preventDefault()
+                      const input = e.currentTarget
+                      const nome = input.value.trim()
+                      if (!nome) return
+                      const existe = (form.cores ?? []).some(
+                        (c) => c.toLowerCase() === nome.toLowerCase(),
+                      )
+                      if (!existe) {
+                        setForm((f) => ({
+                          ...f,
+                          cores: [...(f.cores ?? []), nome],
+                        }))
+                      }
+                      input.value = ''
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="rounded-full bg-white px-3 py-2 text-xs ring-1 ring-brand-soft"
+                    onClick={() => {
+                      const input = document.getElementById(
+                        'cor-custom',
+                      ) as HTMLInputElement | null
+                      const nome = input?.value.trim()
+                      if (!nome) return
+                      const existe = (form.cores ?? []).some(
+                        (c) => c.toLowerCase() === nome.toLowerCase(),
+                      )
+                      if (!existe) {
+                        setForm((f) => ({
+                          ...f,
+                          cores: [...(f.cores ?? []), nome],
+                        }))
+                      }
+                      if (input) input.value = ''
+                    }}
+                  >
+                    + cor
+                  </button>
+                </div>
+                {(form.cores ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {(form.cores ?? []).map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs ring-1 ring-brand-soft"
+                      >
+                        {c}
+                        <button
+                          type="button"
+                          aria-label={`Remover ${c}`}
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              cores: (f.cores ?? []).filter((x) => x !== c),
+                            }))
+                          }
+                          className="text-rose-600"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted">Nenhuma cor selecionada.</p>
+                )}
               </div>
 
               <div>
