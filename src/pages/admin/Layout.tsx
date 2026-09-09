@@ -27,6 +27,15 @@ export function AdminLayout() {
           <Link to="/" className="text-sm text-muted underline">
             Ver loja
           </Link>
+          <a
+            href="https://wa.me/5562991389317"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden text-xs text-muted sm:inline"
+          >
+            por{' '}
+            <span className="font-medium text-brand-deep underline">Odherio</span>
+          </a>
           <button
             type="button"
             onClick={() => void logout()}

@@ -179,6 +179,17 @@ export function LojaPage() {
             Área admin
           </Link>
         </p>
+        <p className="pb-6 text-center text-xs text-muted">
+          Desenvolvido por{' '}
+          <a
+            href="https://wa.me/5562991389317"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-brand-deep underline underline-offset-2"
+          >
+            Odherio
+          </a>
+        </p>
       </main>
 
       {cartCount > 0 ? (

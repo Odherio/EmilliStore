@@ -363,7 +363,113 @@ export function AdminProdutos() {
                       }))
                     }
                   >
-                    + variação
+                    + tamanho
+                  </button>
+                </div>
+                <p className="mb-2 text-xs text-muted">
+                  Toque para adicionar vários tamanhos de uma vez:
+                </p>
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  {[
+                    'PP',
+                    'P',
+                    'M',
+                    'G',
+                    'GG',
+                    'XG',
+                    'Único',
+                    '34',
+                    '36',
+                    '38',
+                    '40',
+                    '42',
+                    '44',
+                    '46',
+                  ].map((nome) => {
+                    const existe = form.variacoes.some(
+                      (v) => v.nome.toUpperCase() === nome.toUpperCase(),
+                    )
+                    return (
+                      <button
+                        key={nome}
+                        type="button"
+                        disabled={existe}
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            variacoes: [
+                              ...f.variacoes.filter((v) => v.nome.trim()),
+                              { id: uid('var'), nome, estoque: 1 },
+                            ],
+                          }))
+                        }
+                        className={`rounded-full px-2.5 py-1 text-xs ${
+                          existe
+                            ? 'bg-brand/20 text-brand-deep'
+                            : 'bg-white text-ink ring-1 ring-brand-soft hover:bg-brand-soft'
+                        }`}
+                      >
+                        {existe ? `✓ ${nome}` : `+ ${nome}`}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mb-2 flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full bg-white px-3 py-1.5 text-xs ring-1 ring-brand-soft"
+                    onClick={() => {
+                      const pack = ['PP', 'P', 'M', 'G', 'GG']
+                      setForm((f) => {
+                        const nomes = new Set(
+                          f.variacoes.map((v) => v.nome.toUpperCase()),
+                        )
+                        const extras = pack
+                          .filter((n) => !nomes.has(n.toUpperCase()))
+                          .map((nome) => ({
+                            id: uid('var'),
+                            nome,
+                            estoque: 1,
+                          }))
+                        return {
+                          ...f,
+                          variacoes: [
+                            ...f.variacoes.filter((v) => v.nome.trim()),
+                            ...extras,
+                          ],
+                        }
+                      })
+                    }}
+                  >
+                    Pacote PP–GG
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full bg-white px-3 py-1.5 text-xs ring-1 ring-brand-soft"
+                    onClick={() => {
+                      const pack = ['34', '36', '38', '40', '42', '44']
+                      setForm((f) => {
+                        const nomes = new Set(
+                          f.variacoes.map((v) => v.nome.toUpperCase()),
+                        )
+                        const extras = pack
+                          .filter((n) => !nomes.has(n))
+                          .map((nome) => ({
+                            id: uid('var'),
+                            nome,
+                            estoque: 1,
+                          }))
+                        return {
+                          ...f,
+                          variacoes: [
+                            ...f.variacoes.filter((v) => v.nome.trim()),
+                            ...extras,
+                          ],
+                        }
+                      })
+                    }}
+                  >
+                    Pacote 34–44
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -380,14 +486,28 @@ export function AdminProdutos() {
                       <input
                         type="number"
                         min={0}
+                        title="Estoque"
                         value={v.estoque}
                         onChange={(e) =>
                           updateVar(v.id, {
                             estoque: Number(e.target.value),
                           })
                         }
-                        className="w-24 rounded-xl border border-brand-soft bg-cream px-3 py-2 text-sm"
+                        className="w-20 rounded-xl border border-brand-soft bg-cream px-3 py-2 text-sm"
                       />
+                      <button
+                        type="button"
+                        aria-label="Remover tamanho"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            variacoes: f.variacoes.filter((x) => x.id !== v.id),
+                          }))
+                        }
+                        className="rounded-xl px-2 text-rose-600 ring-1 ring-rose-200"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
