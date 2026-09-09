@@ -46,6 +46,7 @@ type StoreContextValue = {
     status: PedidoStatus,
     opts?: { forma?: FormaPagamento },
   ) => Promise<void>
+  deletePedido: (id: string) => Promise<void>
   isAdmin: boolean
   login: (
     emailOrPassword: string,
@@ -349,6 +350,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [pedidos],
   )
 
+  const deletePedido = useCallback(async (id: string) => {
+    setPedidos((prev) => {
+      const next = prev.filter((p) => p.id !== id)
+      if (!db.enabled) storage.setPedidos(next)
+      return next
+    })
+    if (db.enabled) await db.deletePedido(id)
+  }, [])
+
   const login = useCallback(async (emailOrPassword: string, password?: string) => {
     if (db.enabled) {
       const email = password ? emailOrPassword : ''
@@ -414,6 +424,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     pedidos,
     criarPedido,
     updatePedidoStatus,
+    deletePedido,
     isAdmin,
     login,
     logout,

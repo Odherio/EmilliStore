@@ -142,6 +142,14 @@ drop policy if exists "admin update pedidos" on pedidos;
 create policy "admin update pedidos" on pedidos for update
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+drop policy if exists "admin delete pedidos" on pedidos;
+create policy "admin delete pedidos" on pedidos for delete
+  using (auth.role() = 'authenticated');
+
+drop policy if exists "admin delete pedido_itens" on pedido_itens;
+create policy "admin delete pedido_itens" on pedido_itens for delete
+  using (auth.role() = 'authenticated');
+
 -- Storage público leitura / autenticado upload
 drop policy if exists "public read produto imagens" on storage.objects;
 create policy "public read produto imagens" on storage.objects

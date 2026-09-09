@@ -348,6 +348,12 @@ export const db = {
     if (error) throw error
   },
 
+  async deletePedido(id: string): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('pedidos').delete().eq('id', id)
+    if (error) throw error
+  },
+
   async uploadImagem(file: File): Promise<string> {
     if (!supabase) throw new Error('Supabase não configurado')
     const ext = file.name.split('.').pop() || 'jpg'

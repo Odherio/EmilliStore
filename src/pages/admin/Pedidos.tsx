@@ -20,7 +20,7 @@ const formaLabel: Record<FormaPagamento, string> = {
 }
 
 export function AdminPedidos() {
-  const { pedidos, updatePedidoStatus, config } = useStore()
+  const { pedidos, updatePedidoStatus, deletePedido, config } = useStore()
   const [confirmando, setConfirmando] = useState<Pedido | null>(null)
   const [forma, setForma] = useState<FormaPagamento>('pix')
   const [salvando, setSalvando] = useState(false)
@@ -155,6 +155,21 @@ export function AdminPedidos() {
                   className="rounded-full bg-brand px-3 py-1.5 text-sm text-white"
                 >
                   WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Excluir o pedido ${p.codigo}? Esta ação não pode ser desfeita.`,
+                      )
+                    ) {
+                      void deletePedido(p.id)
+                    }
+                  }}
+                  className="rounded-full px-3 py-1.5 text-sm text-rose-700 ring-1 ring-rose-200"
+                >
+                  Excluir
                 </button>
               </div>
             </li>
