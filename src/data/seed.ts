@@ -67,76 +67,90 @@ const img = (seed: string) =>
   `https://images.unsplash.com/photo-${seed}?auto=format&fit=crop&w=800&q=80`
 
 export function seedProdutos(): Produto[] {
+  const mk = (
+    nome: string,
+    descricao: string,
+    categoria: string,
+    preco: number,
+    fotos: string[],
+    flags: Partial<Produto>,
+    vars: Array<[string, number]>,
+  ): Produto => {
+    const midias = fotos.map((url) => ({
+      id: uid('mid'),
+      tipo: 'imagem' as const,
+      url,
+    }))
+    return {
+      id: uid('prod'),
+      nome,
+      descricao,
+      marca: 'Emilli',
+      categoria,
+      preco,
+      imagem: fotos[0],
+      midias,
+      ativo: true,
+      destaque: false,
+      promocao: false,
+      lancamento: false,
+      ...flags,
+      variacoes: vars.map(([nomeVar, estoque]) => ({
+        id: uid('var'),
+        nome: nomeVar,
+        estoque,
+      })),
+    }
+  }
+
   return [
-    {
-      id: uid('prod'),
-      nome: 'Vestido Midi Floral',
-      descricao: 'Vestido fluido com estampa delicada, ideal para o dia a dia.',
-      marca: 'Emilli',
-      categoria: 'Vestidos',
-      preco: 189.9,
-      imagem: img('1515372039744-b8f02a3ae446'),
-      ativo: true,
-      destaque: true,
-      promocao: false,
-      lancamento: true,
-      variacoes: [
-        { id: uid('var'), nome: 'P', estoque: 4 },
-        { id: uid('var'), nome: 'M', estoque: 6 },
-        { id: uid('var'), nome: 'G', estoque: 2 },
+    mk(
+      'Vestido Midi Floral',
+      'Vestido fluido com estampa delicada, ideal para o dia a dia.',
+      'Vestidos',
+      189.9,
+      [img('1515372039744-b8f02a3ae446'), img('1469334031218-e382a71b716b')],
+      { destaque: true, lancamento: true },
+      [
+        ['P', 4],
+        ['M', 6],
+        ['G', 2],
       ],
-    },
-    {
-      id: uid('prod'),
-      nome: 'Blusa Linho Off-White',
-      descricao: 'Blusa leve em linho, caimento solto e elegante.',
-      marca: 'Emilli',
-      categoria: 'Blusas',
-      preco: 119.9,
-      imagem: img('1483985988355-763728e1935b'),
-      ativo: true,
-      destaque: false,
-      promocao: true,
-      lancamento: false,
-      variacoes: [
-        { id: uid('var'), nome: 'P', estoque: 3 },
-        { id: uid('var'), nome: 'M', estoque: 5 },
-        { id: uid('var'), nome: 'G', estoque: 1 },
+    ),
+    mk(
+      'Blusa Linho Off-White',
+      'Blusa leve em linho, caimento solto e elegante.',
+      'Blusas',
+      119.9,
+      [img('1483985988355-763728e1935b'), img('1490481651871-ab68de25d43d')],
+      { promocao: true },
+      [
+        ['P', 3],
+        ['M', 5],
+        ['G', 1],
       ],
-    },
-    {
-      id: uid('prod'),
-      nome: 'Calça Wide Leg Bege',
-      descricao: 'Calça wide leg em alfaiataria macia.',
-      marca: 'Emilli',
-      categoria: 'Calças',
-      preco: 219.9,
-      imagem: img('1490481651871-ab68de25d43d'),
-      ativo: true,
-      destaque: true,
-      promocao: false,
-      lancamento: false,
-      variacoes: [
-        { id: uid('var'), nome: '36', estoque: 2 },
-        { id: uid('var'), nome: '38', estoque: 4 },
-        { id: uid('var'), nome: '40', estoque: 3 },
+    ),
+    mk(
+      'Calça Wide Leg Bege',
+      'Calça wide leg em alfaiataria macia.',
+      'Calças',
+      219.9,
+      [img('1490481651871-ab68de25d43d'), img('1515372039744-b8f02a3ae446')],
+      { destaque: true },
+      [
+        ['36', 2],
+        ['38', 4],
+        ['40', 3],
       ],
-    },
-    {
-      id: uid('prod'),
-      nome: 'Conjunto Tricot Rosa',
-      descricao: 'Conjunto em tricot macio na tonalidade da marca.',
-      marca: 'Emilli',
-      categoria: 'Conjuntos',
-      preco: 249.9,
-      imagem: img('1469334031218-e382a71b716b'),
-      ativo: true,
-      destaque: false,
-      promocao: false,
-      lancamento: true,
-      variacoes: [
-        { id: uid('var'), nome: 'Único', estoque: 5 },
-      ],
-    },
+    ),
+    mk(
+      'Conjunto Tricot Rosa',
+      'Conjunto em tricot macio na tonalidade da marca.',
+      'Conjuntos',
+      249.9,
+      [img('1469334031218-e382a71b716b'), img('1483985988355-763728e1935b')],
+      { lancamento: true },
+      [['Único', 5]],
+    ),
   ]
 }

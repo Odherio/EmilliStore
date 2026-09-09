@@ -1,4 +1,5 @@
 import type { LojaConfig, Pedido, Produto } from '../types'
+import { normalizeProdutoMidias } from './produtoMidia'
 
 const KEYS = {
   produtos: 'emilli.produtos',
@@ -22,9 +23,14 @@ function write<T>(key: string, value: T) {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
+function normalizeProduto(p: Produto): Produto {
+  const { imagem, midias } = normalizeProdutoMidias(p)
+  return { ...p, imagem, midias }
+}
+
 export const storage = {
-  getProdutos: () => read<Produto[]>(KEYS.produtos, []),
-  setProdutos: (v: Produto[]) => write(KEYS.produtos, v),
+  getProdutos: () => read<Produto[]>(KEYS.produtos, []).map(normalizeProduto),
+  setProdutos: (v: Produto[]) => write(KEYS.produtos, v.map(normalizeProduto)),
   getPedidos: () => read<Pedido[]>(KEYS.pedidos, []),
   setPedidos: (v: Pedido[]) => write(KEYS.pedidos, v),
   getConfig: () => read<LojaConfig | null>(KEYS.config, null),

@@ -4,6 +4,12 @@ export type Variacao = {
   estoque: number
 }
 
+export type ProdutoMidia = {
+  id: string
+  tipo: 'imagem' | 'video'
+  url: string
+}
+
 export type Produto = {
   id: string
   nome: string
@@ -11,7 +17,9 @@ export type Produto = {
   marca: string
   categoria: string
   preco: number
+  /** Capa (primeira imagem) — usada em card/carrinho */
   imagem: string
+  midias: ProdutoMidia[]
   ativo: boolean
   destaque: boolean
   promocao: boolean

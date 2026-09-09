@@ -1,6 +1,7 @@
-import { Minus, Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatBRL } from '../lib/format'
+import { normalizeProdutoMidias } from '../lib/produtoMidia'
 import type { Produto } from '../types'
 import { Sheet } from './Sheet'
 
@@ -22,6 +23,12 @@ type Props = {
 export function ProductModal({ produto, open, onClose, onAdd }: Props) {
   const [variacaoId, setVariacaoId] = useState<string | null>(null)
   const [qty, setQty] = useState(1)
+  const [midiaIndex, setMidiaIndex] = useState(0)
+
+  const midias = useMemo(() => {
+    if (!produto) return []
+    return normalizeProdutoMidias(produto).midias
+  }, [produto])
 
   const selected = useMemo(
     () => produto?.variacoes.find((v) => v.id === variacaoId) ?? null,
@@ -29,13 +36,26 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
   )
 
   const max = selected?.estoque ?? 1
+  const current = midias[midiaIndex] ?? midias[0]
+
+  useEffect(() => {
+    setMidiaIndex(0)
+    setVariacaoId(null)
+    setQty(1)
+  }, [produto?.id])
 
   if (!produto) return null
 
   const resetAndClose = () => {
     setVariacaoId(null)
     setQty(1)
+    setMidiaIndex(0)
     onClose()
+  }
+
+  const go = (dir: -1 | 1) => {
+    if (midias.length <= 1) return
+    setMidiaIndex((i) => (i + dir + midias.length) % midias.length)
   }
 
   return (
@@ -111,13 +131,84 @@ export function ProductModal({ produto, open, onClose, onAdd }: Props) {
       }
     >
       <div className="space-y-4">
-        <div className="overflow-hidden rounded-2xl bg-brand-soft">
-          <img
-            src={produto.imagem}
-            alt={produto.nome}
-            className="aspect-[4/5] w-full object-cover"
-          />
+        <div className="relative overflow-hidden rounded-2xl bg-brand-soft">
+          {current?.tipo === 'video' ? (
+            <video
+              key={current.id}
+              src={current.url}
+              className="aspect-[4/5] w-full object-cover"
+              controls
+              playsInline
+              autoPlay
+              muted
+              loop
+            />
+          ) : (
+            <img
+              src={current?.url || produto.imagem}
+              alt={produto.nome}
+              className="aspect-[4/5] w-full object-cover"
+            />
+          )}
+
+          {midias.length > 1 ? (
+            <>
+              <button
+                type="button"
+                aria-label="Anterior"
+                onClick={() => go(-1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                aria-label="Próximo"
+                onClick={() => go(1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+                {midias.map((m, i) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    aria-label={`Mídia ${i + 1}`}
+                    onClick={() => setMidiaIndex(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === midiaIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
+
+        {midias.length > 1 ? (
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+            {midias.map((m, i) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMidiaIndex(i)}
+                className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-2 ${
+                  i === midiaIndex ? 'ring-brand' : 'ring-transparent'
+                }`}
+              >
+                {m.tipo === 'video' ? (
+                  <div className="grid h-full w-full place-items-center bg-ink text-[10px] font-semibold text-white">
+                    Vídeo
+                  </div>
+                ) : (
+                  <img src={m.url} alt="" className="h-full w-full object-cover" />
+                )}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {produto.descricao ? (
           <p className="text-sm leading-relaxed text-muted">{produto.descricao}</p>
         ) : null}

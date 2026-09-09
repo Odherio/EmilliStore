@@ -31,6 +31,7 @@ create table if not exists produtos (
   categoria text not null default 'Geral',
   preco numeric(10,2) not null default 0,
   imagem text not null default '',
+  midias jsonb not null default '[]'::jsonb,
   ativo boolean not null default true,
   destaque boolean not null default false,
   promocao boolean not null default false,

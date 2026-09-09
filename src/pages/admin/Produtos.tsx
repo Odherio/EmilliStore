@@ -1,7 +1,9 @@
+import { Trash2, Upload } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useStore } from '../../context/StoreContext'
 import { formatBRL, uid } from '../../lib/format'
-import type { Produto, Variacao } from '../../types'
+import { normalizeProdutoMidias } from '../../lib/produtoMidia'
+import type { Produto, ProdutoMidia, Variacao } from '../../types'
 
 const emptyForm = (): Omit<Produto, 'id'> & { id?: string } => ({
   nome: '',
@@ -10,6 +12,7 @@ const emptyForm = (): Omit<Produto, 'id'> & { id?: string } => ({
   categoria: 'Vestidos',
   preco: 0,
   imagem: '',
+  midias: [],
   ativo: true,
   destaque: false,
   promocao: false,
@@ -27,18 +30,55 @@ export function AdminProdutos() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const titulo = editingId ? 'Editar produto' : 'Novo produto'
+  const midias = form.midias ?? []
 
-  const onPickImage = async (file: File | null) => {
-    if (!file || !uploadImagem) return
-    const url = await uploadImagem(file)
-    setForm((f) => ({ ...f, imagem: url }))
+  const syncCapa = (list: ProdutoMidia[]) => {
+    const { imagem, midias: next } = normalizeProdutoMidias({
+      imagem: '',
+      midias: list,
+    })
+    setForm((f) => ({ ...f, imagem, midias: next }))
+  }
+
+  const onPickFiles = async (
+    files: FileList | null,
+    tipo: 'imagem' | 'video',
+  ) => {
+    if (!files?.length) return
+    setUploading(true)
+    try {
+      const added: ProdutoMidia[] = []
+      for (const file of Array.from(files)) {
+        let url = ''
+        if (uploadImagem) {
+          url = await uploadImagem(file)
+        } else {
+          url = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(String(reader.result))
+            reader.onerror = () => reject(new Error('Falha ao ler arquivo'))
+            reader.readAsDataURL(file)
+          })
+        }
+        added.push({ id: uid('mid'), tipo, url })
+      }
+      syncCapa([...midias, ...added])
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeMidia = (id: string) => {
+    syncCapa(midias.filter((m) => m.id !== id))
   }
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!form.nome.trim() || !form.imagem || form.preco <= 0) return
+    const { imagem, midias: normalized } = normalizeProdutoMidias(form)
+    if (!form.nome.trim() || !imagem || form.preco <= 0) return
     setSaving(true)
     try {
       const produto: Produto = {
@@ -48,7 +88,8 @@ export function AdminProdutos() {
         marca: form.marca.trim() || 'Emilli',
         categoria: form.categoria.trim() || 'Geral',
         preco: Number(form.preco),
-        imagem: form.imagem,
+        imagem,
+        midias: normalized,
         ativo: form.ativo,
         destaque: form.destaque,
         promocao: form.promocao,
@@ -65,8 +106,9 @@ export function AdminProdutos() {
   }
 
   const startEdit = (p: Produto) => {
+    const { imagem, midias: m } = normalizeProdutoMidias(p)
     setEditingId(p.id)
-    setForm({ ...p })
+    setForm({ ...p, imagem, midias: m })
     setOpen(true)
   }
 
@@ -112,7 +154,8 @@ export function AdminProdutos() {
               <p className="text-sm text-brand-deep">{formatBRL(p.preco)}</p>
               <p className="text-xs text-muted">
                 {p.ativo ? 'Ativo' : 'Inativo'} ·{' '}
-                {p.variacoes.reduce((s, v) => s + v.estoque, 0)} un.
+                {p.variacoes.reduce((s, v) => s + v.estoque, 0)} un. ·{' '}
+                {(p.midias?.length || 1)} mídia(s)
               </p>
               <div className="mt-2 flex gap-2">
                 <button
@@ -198,22 +241,90 @@ export function AdminProdutos() {
                   className="mt-1 w-full rounded-xl border border-brand-soft bg-cream px-3 py-2"
                 />
               </label>
-              <label className="block text-sm">
-                Foto *
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
-                  className="mt-1 block w-full text-sm"
-                />
-              </label>
-              {form.imagem ? (
-                <img
-                  src={form.imagem}
-                  alt="Prévia"
-                  className="h-40 w-full rounded-xl object-cover"
-                />
-              ) : null}
+
+              <div className="space-y-2 rounded-2xl bg-cream/80 p-3 ring-1 ring-brand-soft">
+                <p className="text-sm font-medium">Fotos e vídeo *</p>
+                <p className="text-xs text-muted">
+                  Pode enviar várias fotos. Opcional: 1 vídeo. A primeira foto
+                  vira capa na vitrine.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-medium ring-1 ring-brand-soft">
+                    <Upload size={14} />
+                    Fotos
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        void onPickFiles(e.target.files, 'imagem')
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-medium ring-1 ring-brand-soft">
+                    <Upload size={14} />
+                    Vídeo
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        void onPickFiles(e.target.files, 'video')
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                </div>
+                {uploading ? (
+                  <p className="text-xs text-muted">Enviando mídia…</p>
+                ) : null}
+                {midias.length ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {midias.map((m, idx) => (
+                      <div
+                        key={m.id}
+                        className="relative overflow-hidden rounded-xl bg-white ring-1 ring-brand-soft"
+                      >
+                        {m.tipo === 'video' ? (
+                          <video
+                            src={m.url}
+                            className="aspect-square w-full object-cover"
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={m.url}
+                            alt=""
+                            className="aspect-square w-full object-cover"
+                          />
+                        )}
+                        <span className="absolute left-1 top-1 rounded bg-ink/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-white">
+                          {idx === 0 && m.tipo === 'imagem'
+                            ? 'Capa'
+                            : m.tipo === 'video'
+                              ? 'Vídeo'
+                              : 'Foto'}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Remover"
+                          onClick={() => removeMidia(m.id)}
+                          className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-rose-600"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-rose-600">
+                    Adicione ao menos uma foto.
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-wrap gap-3 text-sm">
                 {(
                   [
@@ -293,7 +404,7 @@ export function AdminProdutos() {
               </button>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || !midias.some((m) => m.tipo === 'imagem')}
                 className="flex-1 rounded-full bg-brand py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {saving ? 'Salvando…' : 'Salvar'}

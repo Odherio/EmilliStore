@@ -7,8 +7,10 @@ import type {
   Pedido,
   PedidoStatus,
   Produto,
+  ProdutoMidia,
   Variacao,
 } from '../types'
+import { normalizeProdutoMidias } from './produtoMidia'
 import { supabase, isSupabaseConfigured } from './supabase'
 import { uid } from './format'
 
@@ -20,6 +22,7 @@ type ProdutoRow = {
   categoria: string
   preco: number | string
   imagem: string
+  midias?: ProdutoMidia[] | null
   ativo: boolean
   destaque: boolean
   promocao: boolean
@@ -71,6 +74,10 @@ type PedidoRow = {
 }
 
 function mapProduto(row: ProdutoRow): Produto {
+  const { imagem, midias } = normalizeProdutoMidias({
+    imagem: row.imagem ?? '',
+    midias: row.midias ?? [],
+  })
   return {
     id: row.id,
     nome: row.nome,
@@ -78,7 +85,8 @@ function mapProduto(row: ProdutoRow): Produto {
     marca: row.marca ?? 'Emilli',
     categoria: row.categoria ?? 'Geral',
     preco: Number(row.preco),
-    imagem: row.imagem ?? '',
+    imagem,
+    midias,
     ativo: !!row.ativo,
     destaque: !!row.destaque,
     promocao: !!row.promocao,
@@ -199,6 +207,8 @@ export const db = {
   async saveProduto(produto: Produto): Promise<void> {
     if (!supabase) return
 
+    const { imagem, midias } = normalizeProdutoMidias(produto)
+
     const { error: pErr } = await supabase.from('produtos').upsert({
       id: produto.id,
       nome: produto.nome,
@@ -206,7 +216,8 @@ export const db = {
       marca: produto.marca,
       categoria: produto.categoria,
       preco: produto.preco,
-      imagem: produto.imagem,
+      imagem,
+      midias,
       ativo: produto.ativo,
       destaque: produto.destaque,
       promocao: produto.promocao,
@@ -340,7 +351,10 @@ export const db = {
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const { error } = await supabase.storage
       .from('produto-imagens')
-      .upload(path, file, { upsert: true })
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type || undefined,
+      })
     if (error) throw error
     const { data } = supabase.storage.from('produto-imagens').getPublicUrl(path)
     return data.publicUrl
