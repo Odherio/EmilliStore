@@ -15,6 +15,36 @@ const tipoLabel: Record<TipoLancamento, string> = {
   saida: 'Saída',
 }
 
+type Periodo = 'dia' | 'semana' | 'mes' | 'tudo'
+
+function startOfDay(d: Date) {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
+}
+
+function inPeriodo(iso: string, periodo: Periodo) {
+  if (periodo === 'tudo') return true
+  const when = new Date(iso)
+  const now = new Date()
+  const start = startOfDay(now)
+  if (periodo === 'dia') return when >= start
+  if (periodo === 'semana') {
+    const week = new Date(start)
+    week.setDate(week.getDate() - 6)
+    return when >= week
+  }
+  const month = new Date(start.getFullYear(), start.getMonth(), 1)
+  return when >= month
+}
+
+function periodoLabel(periodo: Periodo) {
+  if (periodo === 'dia') return 'Hoje'
+  if (periodo === 'semana') return 'Últimos 7 dias'
+  if (periodo === 'mes') return 'Este mês'
+  return 'Todo período'
+}
+
 export function AdminFinanceiro() {
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +54,7 @@ export function AdminFinanceiro() {
   const [forma, setForma] = useState<FormaPagamento>('pix')
   const [valor, setValor] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [periodo, setPeriodo] = useState<Periodo>('mes')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -49,15 +80,20 @@ export function AdminFinanceiro() {
     void load()
   }, [load])
 
+  const filtrados = useMemo(
+    () => lancamentos.filter((l) => inPeriodo(l.criadoEm, periodo)),
+    [lancamentos, periodo],
+  )
+
   const resumo = useMemo(() => {
-    const entradas = lancamentos
+    const entradas = filtrados
       .filter((l) => l.tipo === 'entrada')
       .reduce((s, l) => s + l.valor, 0)
-    const saidas = lancamentos
+    const saidas = filtrados
       .filter((l) => l.tipo === 'saida')
       .reduce((s, l) => s + l.valor, 0)
     const porForma = (formaKey: FormaPagamento) => {
-      const lista = lancamentos.filter((l) => l.forma === formaKey)
+      const lista = filtrados.filter((l) => l.forma === formaKey)
       const ent = lista
         .filter((l) => l.tipo === 'entrada')
         .reduce((s, l) => s + l.valor, 0)
@@ -70,11 +106,12 @@ export function AdminFinanceiro() {
       entradas,
       saidas,
       saldo: entradas - saidas,
+      qtd: filtrados.length,
       dinheiro: porForma('dinheiro'),
       cartao: porForma('cartao'),
       pix: porForma('pix'),
     }
-  }, [lancamentos])
+  }, [filtrados])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -141,6 +178,39 @@ export function AdminFinanceiro() {
         >
           Atualizar
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            ['dia', 'Dia'],
+            ['semana', 'Semana'],
+            ['mes', 'Mês'],
+            ['tudo', 'Tudo'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setPeriodo(key)}
+            className={`rounded-full px-4 py-2 text-sm ${
+              periodo === key
+                ? 'bg-ink text-white'
+                : 'bg-white text-ink ring-1 ring-brand-soft'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-2xl bg-brand-soft/50 p-4 ring-1 ring-brand-soft">
+        <p className="text-xs uppercase tracking-wide text-muted">
+          Relatório · {periodoLabel(periodo)}
+        </p>
+        <p className="mt-1 text-sm text-muted">
+          {resumo.qtd} lançamento{resumo.qtd === 1 ? '' : 's'} no período
+        </p>
       </div>
 
       {erro ? (
@@ -278,14 +348,16 @@ export function AdminFinanceiro() {
       </form>
 
       <div className="space-y-2">
-        <h2 className="font-display text-xl">Lançamentos</h2>
+        <h2 className="font-display text-xl">
+          Lançamentos · {periodoLabel(periodo)}
+        </h2>
         {loading ? (
           <p className="text-sm text-muted">Carregando…</p>
-        ) : !lancamentos.length ? (
-          <p className="text-sm text-muted">Nenhum lançamento ainda.</p>
+        ) : !filtrados.length ? (
+          <p className="text-sm text-muted">Nenhum lançamento neste período.</p>
         ) : (
           <ul className="space-y-2">
-            {lancamentos.map((l) => (
+            {filtrados.map((l) => (
               <li
                 key={l.id}
                 className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-brand-soft"

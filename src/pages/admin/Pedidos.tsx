@@ -1,8 +1,9 @@
+import { useMemo, useState } from 'react'
 import { useStore } from '../../context/StoreContext'
 import { printEtiqueta, printEtiquetas } from '../../lib/etiqueta'
 import { formatBRL } from '../../lib/format'
 import { buildWhatsappMessage, openWhatsapp } from '../../lib/whatsapp'
-import type { PedidoStatus } from '../../types'
+import type { FormaPagamento, Pedido, PedidoStatus } from '../../types'
 
 const statusLabel: Record<PedidoStatus, string> = {
   pendente: 'Pendente',
@@ -12,22 +13,58 @@ const statusLabel: Record<PedidoStatus, string> = {
   cancelado: 'Cancelado',
 }
 
+const formaLabel: Record<FormaPagamento, string> = {
+  dinheiro: 'Dinheiro',
+  cartao: 'Cartão',
+  pix: 'PIX',
+}
+
 export function AdminPedidos() {
   const { pedidos, updatePedidoStatus, config } = useStore()
+  const [confirmando, setConfirmando] = useState<Pedido | null>(null)
+  const [forma, setForma] = useState<FormaPagamento>('pix')
+  const [salvando, setSalvando] = useState(false)
+
+  const pendentes = useMemo(
+    () => pedidos.filter((x) => x.status === 'pendente'),
+    [pedidos],
+  )
+
+  const onStatusChange = (p: Pedido, status: PedidoStatus) => {
+    if (status === 'confirmado' && p.status !== 'confirmado') {
+      setForma('pix')
+      setConfirmando(p)
+      return
+    }
+    void updatePedidoStatus(p.id, status)
+  }
+
+  const confirmar = async () => {
+    if (!confirmando) return
+    setSalvando(true)
+    try {
+      await updatePedidoStatus(confirmando.id, 'confirmado', { forma })
+      setConfirmando(null)
+    } finally {
+      setSalvando(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-3xl">Pedidos</h1>
-        {pedidos.length > 0 && (
+        <div>
+          <h1 className="font-display text-3xl">Pedidos</h1>
+          {pendentes.length > 0 ? (
+            <p className="text-sm text-brand-deep">
+              {pendentes.length} pendente{pendentes.length > 1 ? 's' : ''}
+            </p>
+          ) : null}
+        </div>
+        {pendentes.length > 0 && (
           <button
             type="button"
-            onClick={() =>
-              printEtiquetas(
-                pedidos.filter((x) => x.status === 'pendente'),
-                config,
-              )
-            }
+            onClick={() => printEtiquetas(pendentes, config)}
             className="rounded-full border border-brand-soft bg-white px-4 py-2 text-sm"
           >
             Etiquetas pendentes
@@ -41,12 +78,21 @@ export function AdminPedidos() {
           {pedidos.map((p) => (
             <li
               key={p.id}
-              className="rounded-2xl bg-white p-4 ring-1 ring-brand-soft"
+              className={`rounded-2xl bg-white p-4 ring-1 ${
+                p.status === 'pendente'
+                  ? 'ring-brand shadow-sm shadow-brand/10'
+                  : 'ring-brand-soft'
+              }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold">
                     {p.codigo} · {p.clienteNome}
+                    {p.status === 'pendente' ? (
+                      <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
+                        Novo
+                      </span>
+                    ) : null}
                   </p>
                   <p className="text-sm text-muted">{p.clienteWhatsapp}</p>
                   <p className="text-xs text-muted">
@@ -81,7 +127,7 @@ export function AdminPedidos() {
                 <select
                   value={p.status}
                   onChange={(e) =>
-                    void updatePedidoStatus(p.id, e.target.value as PedidoStatus)
+                    onStatusChange(p, e.target.value as PedidoStatus)
                   }
                   className="rounded-full border border-brand-soft bg-cream px-3 py-1.5 text-sm"
                 >
@@ -115,6 +161,53 @@ export function AdminPedidos() {
           ))}
         </ul>
       )}
+
+      {confirmando ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-xl">
+            <h2 className="font-display text-2xl">Confirmar pedido</h2>
+            <p className="mt-1 text-sm text-muted">
+              {confirmando.codigo} · {formatBRL(confirmando.total)}
+            </p>
+            <p className="mt-3 text-sm">
+              Como foi o pagamento? Isso lança automaticamente no financeiro.
+            </p>
+            <div className="mt-3 flex gap-2">
+              {(['dinheiro', 'cartao', 'pix'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setForma(f)}
+                  className={`flex-1 rounded-full px-2 py-2 text-sm ${
+                    forma === f
+                      ? 'bg-ink text-white'
+                      : 'bg-cream ring-1 ring-brand-soft'
+                  }`}
+                >
+                  {formaLabel[f]}
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmando(null)}
+                className="flex-1 rounded-full border border-brand-soft py-2.5 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={salvando}
+                onClick={() => void confirmar()}
+                className="flex-1 rounded-full bg-brand py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {salvando ? 'Salvando…' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

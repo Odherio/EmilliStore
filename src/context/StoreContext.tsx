@@ -11,9 +11,11 @@ import { defaultConfig, seedProdutos } from '../data/seed'
 import { db } from '../lib/db'
 import { storage } from '../lib/storage'
 import { supabase } from '../lib/supabase'
+import { lancarPedidoNoFinanceiro } from '../lib/financeiroPedido'
 import { uid } from '../lib/format'
 import type {
   CartItem,
+  FormaPagamento,
   LojaConfig,
   Pedido,
   PedidoStatus,
@@ -39,7 +41,11 @@ type StoreContextValue = {
   criarPedido: (
     pedido: Omit<Pedido, 'id' | 'codigo' | 'criadoEm' | 'status'>,
   ) => Promise<Pedido>
-  updatePedidoStatus: (id: string, status: PedidoStatus) => Promise<void>
+  updatePedidoStatus: (
+    id: string,
+    status: PedidoStatus,
+    opts?: { forma?: FormaPagamento },
+  ) => Promise<void>
   isAdmin: boolean
   login: (
     emailOrPassword: string,
@@ -314,15 +320,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
 
   const updatePedidoStatus = useCallback(
-    async (id: string, status: PedidoStatus) => {
+    async (
+      id: string,
+      status: PedidoStatus,
+      opts?: { forma?: FormaPagamento },
+    ) => {
+      const atual = pedidos.find((p) => p.id === id)
       setPedidos((prev) => {
         const next = prev.map((p) => (p.id === id ? { ...p, status } : p))
         if (!db.enabled) storage.setPedidos(next)
         return next
       })
       if (db.enabled) await db.updatePedidoStatus(id, status)
+
+      if (
+        status === 'confirmado' &&
+        atual &&
+        atual.status !== 'confirmado' &&
+        atual.total > 0
+      ) {
+        try {
+          await lancarPedidoNoFinanceiro(atual, opts?.forma ?? 'pix')
+        } catch (err) {
+          console.error('Falha ao lançar pedido no financeiro:', err)
+        }
+      }
     },
-    [],
+    [pedidos],
   )
 
   const login = useCallback(async (emailOrPassword: string, password?: string) => {
