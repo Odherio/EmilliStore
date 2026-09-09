@@ -1,4 +1,5 @@
 import { useStore } from '../../context/StoreContext'
+import { printEtiqueta, printEtiquetas } from '../../lib/etiqueta'
 import { formatBRL } from '../../lib/format'
 import { buildWhatsappMessage, openWhatsapp } from '../../lib/whatsapp'
 import type { PedidoStatus } from '../../types'
@@ -16,7 +17,23 @@ export function AdminPedidos() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Pedidos</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="font-display text-3xl">Pedidos</h1>
+        {pedidos.length > 0 && (
+          <button
+            type="button"
+            onClick={() =>
+              printEtiquetas(
+                pedidos.filter((x) => x.status === 'pendente'),
+                config,
+              )
+            }
+            className="rounded-full border border-brand-soft bg-white px-4 py-2 text-sm"
+          >
+            Etiquetas pendentes
+          </button>
+        )}
+      </div>
       {!pedidos.length ? (
         <p className="text-muted">Nenhum pedido ainda.</p>
       ) : (
@@ -48,6 +65,18 @@ export function AdminPedidos() {
                   </li>
                 ))}
               </ul>
+              {p.tipoEntrega === 'entrega' && p.endereco ? (
+                <p className="mt-2 text-xs text-muted">
+                  {p.endereco.rua}, {p.endereco.numero}
+                  {p.endereco.complemento ? ` — ${p.endereco.complemento}` : ''}{' '}
+                  · {p.endereco.bairro} · {p.endereco.cidade}/{p.endereco.uf} ·
+                  CEP {p.endereco.cep}
+                </p>
+              ) : p.tipoEntrega === 'retirada' ? (
+                <p className="mt-2 text-xs text-muted">
+                  Retirada: {config.enderecoLoja}
+                </p>
+              ) : null}
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <select
                   value={p.status}
@@ -64,10 +93,17 @@ export function AdminPedidos() {
                 </select>
                 <button
                   type="button"
+                  onClick={() => printEtiqueta(p, config)}
+                  className="rounded-full border border-brand-deep px-3 py-1.5 text-sm text-brand-deep"
+                >
+                  Etiqueta
+                </button>
+                <button
+                  type="button"
                   onClick={() =>
                     openWhatsapp(
                       p.clienteWhatsapp,
-                      buildWhatsappMessage(p, config.nome),
+                      buildWhatsappMessage(p, config.nome, config),
                     )
                   }
                   className="rounded-full bg-brand px-3 py-1.5 text-sm text-white"

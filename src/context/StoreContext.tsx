@@ -75,63 +75,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
-    async function boot() {
-      setCarrinho(storage.getCarrinho() as CartItem[])
+    // Mostra a loja na hora (layout local); sincroniza Supabase em seguida.
+    setCarrinho(storage.getCarrinho() as CartItem[])
+    const cfg = storage.getConfig()
+    const merged: LojaConfig = {
+      ...defaultConfig,
+      ...(cfg ?? {}),
+      frete: { ...defaultConfig.frete, ...(cfg?.frete ?? {}) },
+      bannerSlides:
+        cfg?.bannerSlides?.length
+          ? cfg.bannerSlides
+          : defaultConfig.bannerSlides,
+      bannerIntervalMs:
+        cfg?.bannerIntervalMs ?? defaultConfig.bannerIntervalMs,
+    }
+    const prods = storage.getProdutos()
+    const initialProdutos = prods.length ? prods : seedProdutos()
+    if (!prods.length) storage.setProdutos(initialProdutos)
+    storage.setConfig(merged)
+    setConfigState(merged)
+    setProdutos(initialProdutos)
+    setPedidos(storage.getPedidos())
+    setIsAdmin(storage.isAdmin())
+    setReady(true)
 
-      if (db.enabled) {
-        try {
-          const [remoteConfig, remoteProdutos, remotePedidos, session] =
-            await Promise.all([
-              db.fetchConfig(),
-              db.fetchProdutos(),
-              db.fetchPedidos(),
-              db.getSession(),
-            ])
-
-          if (cancelled) return
-
-          // Só LÊ no boot. Gravação (seed/config) exige login admin — senão o RLS derruba e caía no modo local.
-          if (remoteConfig) setConfigState(remoteConfig)
-          else setConfigState(defaultConfig)
-
-          setProdutos(remoteProdutos)
-          setPedidos(remotePedidos)
-          setIsAdmin(session)
-          setReady(true)
-          return
-        } catch (err) {
-          console.error('Falha ao carregar Supabase, usando local:', err)
-        }
+    async function syncRemote() {
+      if (!db.enabled) return
+      try {
+        const [remoteConfig, remoteProdutos, remotePedidos, session] =
+          await Promise.all([
+            db.fetchConfig(),
+            db.fetchProdutos(),
+            db.fetchPedidos(),
+            db.getSession(),
+          ])
+        if (cancelled) return
+        if (remoteConfig) setConfigState(remoteConfig)
+        if (remoteProdutos.length) setProdutos(remoteProdutos)
+        setPedidos(remotePedidos)
+        setIsAdmin(session)
+      } catch (err) {
+        console.error('Falha ao sincronizar Supabase:', err)
       }
-
-      const cfg = storage.getConfig()
-      const merged: LojaConfig = {
-        ...defaultConfig,
-        ...(cfg ?? {}),
-        frete: { ...defaultConfig.frete, ...(cfg?.frete ?? {}) },
-        bannerSlides:
-          cfg?.bannerSlides?.length
-            ? cfg.bannerSlides
-            : defaultConfig.bannerSlides,
-        bannerIntervalMs:
-          cfg?.bannerIntervalMs ?? defaultConfig.bannerIntervalMs,
-      }
-      storage.setConfig(merged)
-      const prods = storage.getProdutos()
-      if (!prods.length) {
-        const seeded = seedProdutos()
-        storage.setProdutos(seeded)
-        setProdutos(seeded)
-      } else {
-        setProdutos(prods)
-      }
-      setConfigState(merged)
-      setPedidos(storage.getPedidos())
-      setIsAdmin(storage.isAdmin())
-      if (!cancelled) setReady(true)
     }
 
-    void boot()
+    void syncRemote()
     return () => {
       cancelled = true
     }

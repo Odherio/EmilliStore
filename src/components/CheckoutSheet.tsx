@@ -8,6 +8,7 @@ import {
   getCurrentPosition,
 } from '../lib/frete'
 import { formatBRL, formatWhatsappMask } from '../lib/format'
+import { lojaMapsUrl } from '../lib/maps'
 import { buildWhatsappMessage, openWhatsapp } from '../lib/whatsapp'
 import type { Endereco, TipoEntrega } from '../types'
 import { Sheet } from './Sheet'
@@ -159,7 +160,7 @@ export function CheckoutSheet({ open, onClose }: Props) {
         itens: carrinho,
       })
 
-      const msg = buildWhatsappMessage(pedido, config.nome)
+      const msg = buildWhatsappMessage(pedido, config.nome, config)
       openWhatsapp(config.whatsapp, msg)
       clearCart()
       setPedidoCodigo(pedido.codigo)
@@ -384,6 +385,22 @@ export function CheckoutSheet({ open, onClose }: Props) {
               </span>
             </button>
           </div>
+
+          {tipo === 'retirada' && (
+            <div className="rounded-2xl border border-brand-soft bg-cream/80 p-4 text-sm">
+              <p className="font-medium text-ink">Endereço da loja</p>
+              <p className="mt-1 text-muted">{config.enderecoLoja}</p>
+              <a
+                href={lojaMapsUrl(config)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand-deep underline"
+              >
+                <MapPin size={14} />
+                Ver localização no mapa
+              </a>
+            </div>
+          )}
 
           {tipo === 'entrega' && (
             <div className="space-y-3">

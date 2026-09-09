@@ -1,7 +1,12 @@
-import type { Pedido } from '../types'
+import type { LojaConfig, Pedido } from '../types'
 import { formatBRL } from './format'
+import { lojaMapsUrl } from './maps'
 
-export function buildWhatsappMessage(pedido: Pedido, lojaNome: string) {
+export function buildWhatsappMessage(
+  pedido: Pedido,
+  lojaNome: string,
+  config?: Pick<LojaConfig, 'enderecoLoja' | 'lat' | 'lng'>,
+) {
   const linhas: string[] = []
   linhas.push(`*Novo pedido ${pedido.codigo} — ${lojaNome}*`)
   linhas.push('')
@@ -19,6 +24,10 @@ export function buildWhatsappMessage(pedido: Pedido, lojaNome: string) {
   linhas.push(
     `Entrega: ${pedido.tipoEntrega === 'retirada' ? 'Retirar na loja' : 'Entrega'}`,
   )
+  if (pedido.tipoEntrega === 'retirada' && config) {
+    linhas.push(`Endereço da loja: ${config.enderecoLoja}`)
+    linhas.push(`Localização: ${lojaMapsUrl(config)}`)
+  }
   if (pedido.tipoEntrega === 'entrega' && pedido.endereco) {
     const e = pedido.endereco
     linhas.push(

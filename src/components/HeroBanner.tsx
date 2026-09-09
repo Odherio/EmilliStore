@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { defaultBannerSlides } from '../data/seed'
 import type { BannerSlide, LojaConfig } from '../types'
@@ -70,7 +70,7 @@ export function HeroBanner({ config }: Props) {
   }
 
   return (
-    <section className="hero relative mx-4 min-h-[320px] overflow-hidden rounded-3xl bg-[#2a2222] sm:mx-auto sm:max-w-6xl sm:min-h-[420px]">
+    <section className="hero relative min-h-[72vh] overflow-hidden bg-[#2a2222] sm:mx-auto sm:min-h-[420px] sm:max-w-6xl sm:rounded-[2rem]">
       {slides.map((slide, i) => {
         const active = i === index
         return (
@@ -95,7 +95,7 @@ export function HeroBanner({ config }: Props) {
               <img
                 src={slide.url}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full scale-105 object-cover transition-transform duration-[8s] ease-out"
               />
             )}
           </div>
@@ -106,24 +106,25 @@ export function HeroBanner({ config }: Props) {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'linear-gradient(180deg, rgba(42,24,28,.55) 0%, rgba(42,24,28,.72) 45%, rgba(42,24,28,.82) 100%)',
+            'linear-gradient(180deg, rgba(50,32,31,.35) 0%, rgba(50,32,31,.55) 40%, rgba(50,32,31,.88) 100%)',
         }}
       />
 
-      <div className="relative z-10 flex min-h-[320px] items-center justify-center px-6 py-10 text-center sm:min-h-[420px] sm:px-12">
-        <div className="max-w-[640px]">
-          <span className="inline-flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.17em] text-brand">
-            <Sparkles size={14} />
+      <div className="relative z-10 flex min-h-[72vh] flex-col justify-end px-5 pb-10 pt-24 sm:min-h-[420px] sm:justify-center sm:px-12 sm:pb-12 sm:pt-12 sm:text-center">
+        <div className="max-w-[520px] sm:mx-auto">
+          <p className="font-display text-3xl font-semibold tracking-wide text-[#f8f4f2] sm:text-4xl">
+            EmilliStore
+          </p>
+          <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.22em] text-brand">
             {current.eyebrow}
-          </span>
-          <h1 className="mt-4 font-sans text-[clamp(34px,6vw,64px)] font-normal leading-[1.06] tracking-[-0.045em] text-[#f8f4f2]">
-            {current.titulo}
-            <br />
+          </p>
+          <h1 className="mt-3 font-sans text-[clamp(28px,8vw,48px)] font-normal leading-[1.08] tracking-[-0.03em] text-[#f8f4f2]">
+            {current.titulo}{' '}
             <em className="font-display italic font-semibold text-brand">
               {current.tituloDestaque}
             </em>
           </h1>
-          <p className="mx-auto mt-4 max-w-[380px] text-sm leading-relaxed text-[#e8dede] sm:text-base">
+          <p className="mt-3 max-w-[340px] text-sm leading-relaxed text-[#e8dede] sm:mx-auto sm:text-base">
             {current.subtitulo}
           </p>
         </div>
@@ -135,7 +136,7 @@ export function HeroBanner({ config }: Props) {
             type="button"
             aria-label="Anterior"
             onClick={() => go(-1)}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm hover:bg-black/50 sm:left-4"
+            className="absolute left-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm hover:bg-black/50 sm:left-4 sm:flex"
           >
             <ChevronLeft size={18} />
           </button>
@@ -143,7 +144,7 @@ export function HeroBanner({ config }: Props) {
             type="button"
             aria-label="Próximo"
             onClick={() => go(1)}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm hover:bg-black/50 sm:right-4"
+            className="absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm hover:bg-black/50 sm:right-4 sm:flex"
           >
             <ChevronRight size={18} />
           </button>
@@ -154,8 +155,8 @@ export function HeroBanner({ config }: Props) {
                 type="button"
                 aria-label={`Ir para slide ${i + 1}`}
                 onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all ${
-                  i === index ? 'w-6 bg-brand' : 'w-2 bg-white/55 hover:bg-white/80'
+                className={`h-1.5 rounded-full transition-all ${
+                  i === index ? 'w-7 bg-brand' : 'w-1.5 bg-white/50'
                 }`}
               />
             ))}

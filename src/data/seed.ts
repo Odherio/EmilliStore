@@ -44,9 +44,10 @@ export const defaultConfig: LojaConfig = {
   nome: 'EmilliStore',
   slug: 'emilli',
   whatsapp: '11999999999',
-  enderecoLoja: 'São Paulo, SP',
-  lat: -23.5505,
-  lng: -46.6333,
+  enderecoLoja:
+    'Rua Eugênio Armando Godoy, Quadra X2, Lote 13 — Vila Concórdia, Goiânia/GO — CEP 74770-320',
+  lat: -16.66098,
+  lng: -49.18812,
   capaUrl: defaultBannerSlides[0].url,
   heroEyebrow: defaultBannerSlides[0].eyebrow,
   heroTitulo: defaultBannerSlides[0].titulo,
