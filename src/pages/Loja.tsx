@@ -11,6 +11,7 @@ import { ProductCard } from '../components/ProductCard'
 import { ProductModal } from '../components/ProductModal'
 import { CheckoutSheet } from '../components/CheckoutSheet'
 import { HeroBanner } from '../components/HeroBanner'
+import { InstagramButton } from '../components/InstagramButton'
 import { useStore } from '../context/StoreContext'
 import { formatBRL } from '../lib/format'
 import type { Produto } from '../types'
@@ -205,6 +206,8 @@ export function LojaPage() {
           </button>
         </div>
       ) : null}
+
+      <InstagramButton />
 
       <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-brand-soft/80 bg-cream/95 backdrop-blur-xl sm:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-4 px-2 pt-2">
