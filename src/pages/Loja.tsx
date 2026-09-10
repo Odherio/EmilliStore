@@ -23,9 +23,6 @@ export function LojaPage() {
   const [categoria, setCategoria] = useState('Tudo')
   const [produtoAtivo, setProdutoAtivo] = useState<Produto | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
-  const [filtroExtra, setFiltroExtra] = useState<'tudo' | 'novidades' | 'promocoes'>(
-    'tudo',
-  )
   const buscaRef = useRef<HTMLInputElement>(null)
   const catalogoRef = useRef<HTMLElement>(null)
 
@@ -43,8 +40,6 @@ export function LojaPage() {
     const q = busca.trim().toLowerCase()
     return ativos.filter((p) => {
       if (categoria !== 'Tudo' && p.categoria !== categoria) return false
-      if (filtroExtra === 'novidades' && !p.lancamento) return false
-      if (filtroExtra === 'promocoes' && !p.promocao) return false
       if (!q) return true
       return (
         p.nome.toLowerCase().includes(q) ||
@@ -52,35 +47,13 @@ export function LojaPage() {
         p.categoria.toLowerCase().includes(q)
       )
     })
-  }, [ativos, busca, categoria, filtroExtra])
+  }, [ativos, busca, categoria])
 
   const wa = config.whatsapp.replace(/\D/g, '')
   const waUrl = `https://wa.me/55${wa.startsWith('55') ? wa.slice(2) : wa}`
 
   const irCatalogo = () => {
     catalogoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const irInicio = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const escolherCategoria = (nome: string) => {
-    setFiltroExtra('tudo')
-    setCategoria(nome)
-    irCatalogo()
-  }
-
-  const verNovidades = () => {
-    setCategoria('Tudo')
-    setFiltroExtra('novidades')
-    irCatalogo()
-  }
-
-  const verPromocoes = () => {
-    setCategoria('Tudo')
-    setFiltroExtra('promocoes')
-    irCatalogo()
   }
 
   const abrirBusca = () => {
@@ -136,13 +109,7 @@ export function LojaPage() {
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
               Catálogo
             </p>
-            <h2 className="font-display text-2xl text-ink">
-              {filtroExtra === 'novidades'
-                ? 'Novidades'
-                : filtroExtra === 'promocoes'
-                  ? 'Promoções'
-                  : 'Peças para você'}
-            </h2>
+            <h2 className="font-display text-2xl text-ink">Peças para você</h2>
           </div>
           <p className="text-xs text-muted">{filtrados.length} itens</p>
         </div>
@@ -181,10 +148,7 @@ export function LojaPage() {
               <button
                 key={c}
                 type="button"
-                onClick={() => {
-                  setFiltroExtra('tudo')
-                  setCategoria(c)
-                }}
+                onClick={() => setCategoria(c)}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm transition ${
                   active
                     ? 'bg-ink text-white shadow-md shadow-ink/15'
@@ -212,16 +176,7 @@ export function LojaPage() {
         )}
       </main>
 
-      <LojaFooter
-        config={config}
-        categorias={categorias}
-        waUrl={waUrl}
-        onInicio={irInicio}
-        onCatalogo={irCatalogo}
-        onCategoria={escolherCategoria}
-        onNovidades={verNovidades}
-        onPromocoes={verPromocoes}
-      />
+      <LojaFooter config={config} />
 
       {cartCount > 0 ? (
         <div className="fixed inset-x-0 bottom-[4.75rem] z-30 flex justify-center px-4 sm:bottom-6">
